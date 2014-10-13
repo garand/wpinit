@@ -7,10 +7,10 @@ WP_VERSION=4.0
 if [ ! -f composer.json ]; then
   printf "Creating Composer file..."
   printf "{
-    \"require\": {
-      \"johnpbloch/wordpress\": \"$WP_VERSION\"
-    }
-  }" >> composer.json
+  \"require\": {
+    \"johnpbloch/wordpress\": \"$WP_VERSION\"
+  }
+}" >> composer.json
   printf "Done!\n"
 fi
 
@@ -133,10 +133,12 @@ if [ ! -d content/plugins ]; then
 fi
 
 # Create the uploads directory
-if [ ! -d content/themes/twentyfourteen ]; then
-  printf "Copying default theme..."
-  cp -r wordpress/wp-content/themes/twentyfourteen/ content/themes/twentyfourteen
-  printf "Done!\n"
+if [ ! -d wordpress/wp-content/themes/twentyfourteen ]; then
+  if [ ! -d content/themes/twentyfourteen ]; then
+    printf "Copying default theme..."
+    cp -r wordpress/wp-content/themes/twentyfourteen/ content/themes/twentyfourteen
+    printf "Done!\n"
+  fi
 fi
 
 # Create index file
@@ -146,6 +148,34 @@ if [ ! -f index.php ]; then
   printf "Done!\n"
 fi
 
-open http://localhost:4103 && php -S 0.0.0.0:4103;
+# Create .gitignore file
+if [ ! -f .gitignore ]; then
+  printf "Creating .gitignore file..."
+  printf "wordpress/
+vendor/
+content/uploads/
+composer.lock
+composer.phar" >> .gitignore
+  printf "Done!\n"
+fi
 
-printf "All set! You're running WordPress $WP_VERSION.\n"
+# Initialize Git repository
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+  printf "Initializing Git repository..."
+  git init >/dev/null
+  git add . >/dev/null
+  git commit -m "Initial commit" >/dev/null
+  printf "Done!\n"
+fi
+
+# Print success message
+bold=`tput bold`
+normal=`tput sgr0`
+echo "╔════════════════════════════════════════════════╗"
+echo "║     All set! You're running ${bold}WordPress $WP_VERSION${normal}.     ║"
+echo "╟────────────────────────────────────────────────╢"
+echo "║   Open ${bold}http://localhost:4103${normal} to get started.   ║"
+echo "╚════════════════════════════════════════════════╝"
+
+# Start PHP server
+php -S 0.0.0.0:4103  >/dev/null
