@@ -97,12 +97,14 @@ define('WP_HOME',    \$protocol . \"://\${_SERVER['HTTP_HOST']}\");"
   printf "Done!\n"
 fi
 
+# Installing Composer
 if ! which composer >/dev/null; then
   printf "Installing Composer..."
   curl -sS https://getcomposer.org/installer | php >/dev/null
   printf "Done!\n"
 fi
 
+# Installing WordPress
 printf "Installing WordPress $WP_VERSION..."
 if ! which composer >/dev/null; then
   php composer.phar update >/dev/null
