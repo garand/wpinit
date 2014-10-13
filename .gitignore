@@ -1,6 +1,0 @@
-wordpress/
-vendor/
-content/uploads/
-wp-config.php
-composer.lock
-composer.phar
