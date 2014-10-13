@@ -1,0 +1,151 @@
+#!/bin/bash
+
+# Set WordPress Version
+WP_VERSION=4.0
+
+# Create Composer file
+if [ ! -f composer.json ]; then
+  printf "Creating Composer file..."
+  printf "{
+    \"require\": {
+      \"johnpbloch/wordpress\": \"$WP_VERSION\"
+    }
+  }" >> composer.json
+  printf "Done!\n"
+fi
+
+# Set WordPress version in Composer file
+printf "Setting WordPress version to $WP_VERSION..."
+sed -i "" "s/\/wordpress.*/\/wordpress\": \"$WP_VERSION\"/g" composer.json
+printf "Done!\n"
+
+# Download wp-config.php file if none exists
+if [ ! -f wp-config.php ]; then
+  printf "Downloading wp-config.php file..."
+  curl -s https://raw.githubusercontent.com/WordPress/WordPress/"$WP_VERSION"/wp-config-sample.php > wp-config.php
+  sed -i "" "s/localhost/database_host_here/g" wp-config.php
+  printf "Done!\n"
+fi
+
+# Set Database Name
+if grep -q "database_name_here" wp-config.php; then
+  printf "Database Name: "
+  read DB_NAME
+  sed -i "" "s/database_name_here/$DB_NAME/g" wp-config.php
+fi
+
+# Set Database User
+if grep -q "username_here" wp-config.php; then
+  printf "Database User: "
+  read DB_USER
+  sed -i "" "s/username_here/$DB_USER/g" wp-config.php
+fi
+
+# Set Database Password
+if grep -q "password_here" wp-config.php; then
+  printf "Database Password: "
+  read DB_PASSWORD
+  sed -i "" "s/password_here/$DB_PASSWORD/g" wp-config.php
+fi
+
+# Set Database Host
+if grep -q "database_host_here" wp-config.php; then
+  printf "Database Host: "
+  read DB_HOST
+  sed -i "" "s/database_host_here/$DB_HOST/g" wp-config.php
+fi
+
+# Setup WordPress Authentication Keys
+if grep -q "put your unique phrase here" wp-config.php; then
+  printf "Setting WordPress Authentication Keys..."
+  SALT=$(curl -sL https://api.wordpress.org/secret-key/1.1/salt/)
+  STRING='put your unique phrase here'
+  printf "%s\n" "g/.*$STRING/d" a "$SALT" . w | ed -s wp-config.php
+  printf "Done!\n"
+fi
+
+# Set content directory
+if ! grep -q "WP_CONTENT_DIR" wp-config.php; then
+  printf "Configuring content directory..."
+  WP_CONTENT_DIR="/** Set WordPress content directory to be outside install directory. */
+define('WP_CONTENT_DIR', \$_SERVER['DOCUMENT_ROOT'] . \"/content\");
+define('WP_CONTENT_URL', \"/content\");
+"
+
+  WP_SETTINGS_COMMENT=`grep -w "Sets up WordPress vars and included files" wp-config.php`
+  WP_SETTINGS=`grep -w "wp-settings" wp-config.php`
+
+  sed -i "" '/Sets up WordPress vars and included files/d' wp-config.php
+  sed -i "" '/wp-settings/d' wp-config.php
+
+  echo "$WP_CONTENT_DIR" >> wp-config.php
+  echo "$WP_SETTINGS_COMMENT" >> wp-config.php
+  echo "$WP_SETTINGS" >> wp-config.php
+
+  printf "Done!\n"
+fi
+
+# Make WordPress Portable
+if ! grep -q "WP_SITEURL" wp-config.php; then
+  printf "Making WordPress Portable..."
+  WP_PORTABLE="
+/** Set WordPress URL to be dynamic based on current server */
+\$protocol = (is_ssl() ? \"https\" : \"http\");
+define('WP_SITEURL', \$protocol . \"://\${_SERVER['HTTP_HOST']}/wordpress\"); // WordPress Install Directory
+define('WP_HOME',    \$protocol . \"://\${_SERVER['HTTP_HOST']}\");"
+  echo "$WP_PORTABLE" >> wp-config.php
+  printf "Done!\n"
+fi
+
+if ! which composer >/dev/null; then
+  printf "Installing Composer..."
+  curl -sS https://getcomposer.org/installer | php >/dev/null
+  printf "Done!\n"
+fi
+
+printf "Installing WordPress $WP_VERSION..."
+if ! which composer >/dev/null; then
+  php composer.phar update >/dev/null
+else
+  composer update >/dev/null
+fi
+printf "Done!\n"
+
+# Create the content directory
+if [ ! -d content ]; then
+  printf "Creating content directory..."
+  mkdir content
+  printf "Done!\n"
+fi
+
+# Create the themes directory
+if [ ! -d content/themes ]; then
+  printf "Creating themes directory..."
+  mkdir content/themes
+  printf "Done!\n"
+fi
+
+# Create the plugins directory
+if [ ! -d content/plugins ]; then
+  printf "Creating plugins directory..."
+  mkdir content/plugins
+  printf "Done!\n"
+fi
+
+# Create the uploads directory
+if [ ! -d content/themes/twentyfourteen ]; then
+  printf "Copying default theme..."
+  cp -r wordpress/wp-content/themes/twentyfourteen/ content/themes/twentyfourteen
+  printf "Done!\n"
+fi
+
+# Create index file
+if [ ! -f index.php ]; then
+  printf "Creating index file..."
+  echo "<?php require( 'wordpress/index.php' );" >> index.php
+  printf "Done!\n"
+fi
+
+open http://localhost:4103 && php -S 0.0.0.0:4103;
+
+printf "All set! You're running WordPress $WP_VERSION.\n"
