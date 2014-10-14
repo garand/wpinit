@@ -55,6 +55,18 @@ if grep -q "database_host_here" wp-config.php; then
   sed -i "" "s/database_host_here/$DB_HOST/g" wp-config.php
 fi
 
+# Creating Database
+if [ ! "$DB_PASSWORD" == "" ]; then
+  DB_PASSWORD="-password$DB_PASSWORD"
+fi
+DB_CHECK=`mysql -u $DB_USER $DB_PASSWORD -h $DB_HOST -e "SHOW DATABASES" | grep -Fo $DB_NAME`
+if [ ! "$DB_CHECK" == "$DB_NAME" ]; then
+  printf "Creating Database..."
+  mysql.server start >/dev/null
+  mysql -u $DB_USER $DB_PASSWORD -h $DB_HOST -e "create database $DB_NAME" >/dev/null
+  printf "Done!\n"
+fi
+
 # Setup WordPress Authentication Keys
 if grep -q "put your unique phrase here" wp-config.php; then
   printf "Setting WordPress Authentication Keys..."
