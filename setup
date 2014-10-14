@@ -21,10 +21,13 @@ printf "Done!\n"
 
 # Download wp-config.php file if none exists
 if [ ! -f wp-config.php ]; then
+  CREATE_DB=true
   printf "Downloading wp-config.php file..."
   curl -s https://raw.githubusercontent.com/WordPress/WordPress/"$WP_VERSION"/wp-config-sample.php > wp-config.php
   sed -i "" "s/localhost/database_host_here/g" wp-config.php
   printf "Done!\n"
+else
+  CREATE_DB=false
 fi
 
 # Set Database Name
@@ -56,15 +59,17 @@ if grep -q "database_host_here" wp-config.php; then
 fi
 
 # Creating Database
-if [ ! "$DB_PASSWORD" == "" ]; then
-  DB_PASSWORD="-password$DB_PASSWORD"
-fi
-DB_CHECK=`mysql -u $DB_USER $DB_PASSWORD -h $DB_HOST -e "SHOW DATABASES" | grep -Fo $DB_NAME`
-if [ ! "$DB_CHECK" == "$DB_NAME" ]; then
-  printf "Creating Database..."
-  mysql.server start >/dev/null
-  mysql -u $DB_USER $DB_PASSWORD -h $DB_HOST -e "create database $DB_NAME" >/dev/null
-  printf "Done!\n"
+if [ "$CREATE_DB" == true ]; then
+  if [ ! "$DB_PASSWORD" == "" ]; then
+    DB_PASSWORD="-password$DB_PASSWORD"
+  fi
+  DB_CHECK=`mysql -u $DB_USER $DB_PASSWORD -h $DB_HOST -e "SHOW DATABASES" | grep -Fo $DB_NAME`
+  if [ ! "$DB_CHECK" == "$DB_NAME" ]; then
+    printf "Creating Database..."
+    mysql.server start >/dev/null
+    mysql -u $DB_USER $DB_PASSWORD -h $DB_HOST -e "create database $DB_NAME" >/dev/null
+    printf "Done!\n"
+  fi
 fi
 
 # Setup WordPress Authentication Keys
@@ -147,7 +152,7 @@ if [ ! -d content/plugins ]; then
 fi
 
 # Create the uploads directory
-if [ ! -d wordpress/wp-content/themes/twentyfourteen ]; then
+if [ -d wordpress/wp-content/themes/twentyfourteen ]; then
   if [ ! -d content/themes/twentyfourteen ]; then
     printf "Copying default theme..."
     cp -r wordpress/wp-content/themes/twentyfourteen/ content/themes/twentyfourteen
