@@ -3,6 +3,12 @@
 # Set WordPress Version
 WP_VERSION=4.0
 
+# Create Project Directory
+printf "Project Name: "
+read PDIR
+mkdir "$PDIR"
+cd "$PDIR"
+
 # Create Composer file
 if [ ! -f composer.json ]; then
   printf "Creating Composer file..."
