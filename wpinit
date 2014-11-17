@@ -114,8 +114,8 @@ if ! grep -q "WP_SITEURL" wp-config.php; then
   WP_PORTABLE="
 /** Set WordPress URL to be dynamic based on current server */
 \$protocol = (is_ssl() ? \"https\" : \"http\");
-define('WP_SITEURL', \$protocol . \"://\${_SERVER['HTTP_HOST']}/wordpress\"); // WordPress Install Directory
-define('WP_HOME',    \$protocol . \"://\${_SERVER['HTTP_HOST']}\");"
+update_option('siteurl', \$protocol . \"://\${_SERVER['HTTP_HOST']}/wordpress\"); // WordPress Install Directory
+update_option('home',    \$protocol . \"://\${_SERVER['HTTP_HOST']}\");"
   echo "$WP_PORTABLE" >> wp-config.php
   printf "Done!\n"
 fi
