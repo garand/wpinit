@@ -197,7 +197,7 @@ fi
 bold=`tput bold`
 normal=`tput sgr0`
 echo "╔══════════════════════════════════════════════════╗"
-echo "║      All set! You're running ${bold}WordPress $WP_VERSION${normal}.      ║"
+echo "║     All set! You're running ${bold}WordPress $WP_VERSION${normal}.     ║"
 echo "╟──────────────────────────────────────────────────╢"
 echo "║    Open ${bold}http://localhost:4103${normal} to get started.    ║"
 echo "╚══════════════════════════════════════════════════╝"
